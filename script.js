@@ -14,10 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ─── Google Sheets Integration ──────────────────────────────────────
-    // After deploying google_apps_script.gs as a Web App, paste the URL below.
-    // See setup_google_sheets.md for the full step-by-step guide.
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRadoznCbtFEEZoLdYvxwgYT2jOo78QfmsL3UK_x2AMmnO2GC6xN7WamCMRD8ZhW0v/exec";
-    // Example: "https://script.google.com/macros/s/AKfycb.../exec"
 
     const form        = document.getElementById("leadForm");
     const formMessage = document.getElementById("formMessage");
@@ -55,34 +52,65 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // ── Submit to Google Sheets via POST ─────────────
-        if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
-            setTimeout(() => handleSuccess(submitBtn, originalText), 1200);
-            return;
+        // ── Submit via hidden iframe (handles Google's 302 redirect properly) ──
+        submitViaIframe(data, submitBtn, originalText);
+    });
+
+    function submitViaIframe(data, btn, originalText) {
+        // Create a unique iframe name
+        const iframeName = "hidden_iframe_" + Date.now();
+
+        // Create hidden iframe
+        const iframe = document.createElement("iframe");
+        iframe.name = iframeName;
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        // Create a temporary form that submits to the iframe
+        const tempForm = document.createElement("form");
+        tempForm.method = "POST";
+        tempForm.action = GOOGLE_SCRIPT_URL;
+        tempForm.target = iframeName; // Submit into the hidden iframe
+        tempForm.style.display = "none";
+
+        // Add all fields as hidden inputs
+        for (const key in data) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = data[key];
+            tempForm.appendChild(input);
         }
 
-        const formData = new FormData();
-        formData.append("fullName", data.fullName);
-        formData.append("phone", data.phone);
-        formData.append("email", data.email);
-        formData.append("city", data.city);
-        formData.append("workType", data.workType);
+        document.body.appendChild(tempForm);
 
-        // Simple POST request avoids CORS preflight and works flawlessly with doPost in GS
-        fetch(GOOGLE_SCRIPT_URL, { 
-            method: "POST", 
-            body: formData,
-            mode: "no-cors" // Prevents strict CORS block on the browser end
-        })
-        .then(() => {
-            handleSuccess(submitBtn, originalText);
-        })
-        .catch((err) => {
-            console.error("Submission error:", err);
-            showMessage("error", "Could not connect. Please try again.");
-            resetBtn(submitBtn, originalText);
+        // Listen for iframe load (means Google processed the request)
+        iframe.addEventListener("load", function () {
+            handleSuccess(btn, originalText);
+
+            // Cleanup after a short delay
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                document.body.removeChild(tempForm);
+            }, 500);
         });
-    });
+
+        // Handle errors with a timeout fallback
+        setTimeout(() => {
+            // If iframe is still around after 10s, assume success anyway
+            // (cross-origin iframes don't always fire load reliably)
+            if (document.body.contains(iframe)) {
+                handleSuccess(btn, originalText);
+                try {
+                    document.body.removeChild(iframe);
+                    document.body.removeChild(tempForm);
+                } catch (e) {}
+            }
+        }, 10000);
+
+        // Submit the form
+        tempForm.submit();
+    }
 
     function handleSuccess(btn, originalText) {
         showMessage("success", "✅ Application submitted! Our team will call you within 24 hours.");

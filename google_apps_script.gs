@@ -7,13 +7,23 @@
 const SHEET_ID   = "11ez4yDoJ1oi4QPk_LOXmOPrLTY3Vhk1xN7w845u4YlA";
 const SHEET_NAME = "Sheet1"; // Change only if your tab has a different name
 
-// ── Primary handler: GET with URL params (no CORS issues for static sites) ──
-function doGet(e) {
-  try {
-    const ss    = SpreadsheetApp.openById(SHEET_ID);
-    let   sheet = ss.getSheetByName(SHEET_NAME);
+// ── Primary handler: receives form POST data from the website ──
+function doPost(e) {
+  return saveData(e);
+}
 
-    // Auto-create sheet if it somehow doesn't exist
+// ── Fallback: also handle GET requests (for testing in browser) ──
+function doGet(e) {
+  return saveData(e);
+}
+
+// ── Core logic: save form data to sheet ──
+function saveData(e) {
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_NAME);
+
+    // Auto-create sheet if it doesn't exist
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
     }
@@ -34,8 +44,8 @@ function doGet(e) {
            .setFontColor("#FFFFFF");
     }
 
-    // Read URL params (sent from the website form via fetch GET)
-    const p = e.parameter;
+    // Read form parameters
+    var p = e.parameter;
     sheet.appendRow([
       new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       p.fullName || "",
@@ -45,21 +55,14 @@ function doGet(e) {
       p.workType || ""
     ]);
 
-    return buildResponse({ result: "success" });
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+
   } catch (err) {
-    return buildResponse({ result: "error", message: err.toString() });
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// ── Fallback: POST handler (not used by website but useful for testing) ──
-function doPost(e) {
-  // Delegate to same logic by adapting the event object
-  return doGet(e);
-}
-
-// ── Helper: return plain JSON ────────────────────────────────────────
-function buildResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
