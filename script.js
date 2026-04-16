@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ─── Google Sheets Integration ──────────────────────────────────────
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRadoznCbtFEEZoLdYvxwgYT2jOo78QfmsL3UK_x2AMmnO2GC6xN7WamCMRD8ZhW0v/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfGbfs8nPqvX5f_2yvgh3vto33gBTLG0TfWone0nthM2THll56jj5N5us-rDlm1irw/exec";
 
     const form        = document.getElementById("leadForm");
     const formMessage = document.getElementById("formMessage");
