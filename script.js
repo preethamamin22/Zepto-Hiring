@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ─── Google Sheets Integration ──────────────────────────────────────
     // After deploying google_apps_script.gs as a Web App, paste the URL below.
     // See setup_google_sheets.md for the full step-by-step guide.
-    const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRadoznCbtFEEZoLdYvxwgYT2jOo78QfmsL3UK_x2AMmnO2GC6xN7WamCMRD8ZhW0v/exec";
     // Example: "https://script.google.com/macros/s/AKfycb.../exec"
 
     const form        = document.getElementById("leadForm");
