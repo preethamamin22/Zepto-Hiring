@@ -55,29 +55,33 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // ── Submit to Google Sheets via GET with URL params ─────────────
-        // Google Apps Script handles GET requests without CORS issues on static sites.
+        // ── Submit to Google Sheets via POST ─────────────
         if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
-            // Demo mode — simulate success until script URL is configured
-            setTimeout(() => {
-                handleSuccess(submitBtn, originalText);
-            }, 1200);
+            setTimeout(() => handleSuccess(submitBtn, originalText), 1200);
             return;
         }
 
-        const params = new URLSearchParams(data);
-        const url    = `${GOOGLE_SCRIPT_URL}?${params.toString()}`;
+        const formData = new FormData();
+        formData.append("fullName", data.fullName);
+        formData.append("phone", data.phone);
+        formData.append("email", data.email);
+        formData.append("city", data.city);
+        formData.append("workType", data.workType);
 
-        // Use no-cors fetch (response body won't be readable, but the request reaches Google)
-        fetch(url, { method: "GET", mode: "no-cors" })
-            .then(() => {
-                handleSuccess(submitBtn, originalText);
-            })
-            .catch((err) => {
-                console.error("Submission error:", err);
-                showMessage("error", "Could not connect. Please try again.");
-                resetBtn(submitBtn, originalText);
-            });
+        // Simple POST request avoids CORS preflight and works flawlessly with doPost in GS
+        fetch(GOOGLE_SCRIPT_URL, { 
+            method: "POST", 
+            body: formData,
+            mode: "no-cors" // Prevents strict CORS block on the browser end
+        })
+        .then(() => {
+            handleSuccess(submitBtn, originalText);
+        })
+        .catch((err) => {
+            console.error("Submission error:", err);
+            showMessage("error", "Could not connect. Please try again.");
+            resetBtn(submitBtn, originalText);
+        });
     });
 
     function handleSuccess(btn, originalText) {
